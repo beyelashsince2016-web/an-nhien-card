@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AN NHIEN BEAUTY - Quản Lý Tích Điểm Nối Mi</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Quicksand', sans-serif; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: #fdf2f4; }
+        ::-webkit-scrollbar-thumb { background: #fbcfe8; border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-[#FFF0F3] min-h-screen text-gray-700 pb-20">
+
+    <!-- MÀN HÌNH ĐĂNG NHẬP -->
+    <div id="loginScreen" class="fixed inset-0 bg-[#FFF0F3] z-50 flex items-center justify-center p-4">
+        <div class="bg-white/90 backdrop-blur-md w-full max-w-sm rounded-3xl p-6 shadow-xl border border-pink-100 text-center">
+            <div class="w-16 h-16 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-4 text-pink-500 text-2xl shadow-inner">
+                <i class="fa-solid fa-spa"></i>
+            </div>
+            <h2 class="text-xl font-bold text-gray-800 mb-1">AN NHIEN BEAUTY</h2>
+            <p class="text-xs text-pink-400 mb-6">Đăng nhập nhanh để quản lý tiệm nối mi</p>
+            
+            <form onsubmit="handleLogin(event)" class="space-y-4 text-left">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">TÊN THỢ HOẶC TÊN TIỆM</label>
+                    <input type="text" id="loginUser" required placeholder="Nhập tên thợ hoặc SĐT quản lý..." class="w-full px-4 py-3 bg-pink-50/50 border border-pink-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-pink-400 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">EMAIL HOẶC SỐ ĐIỆN THOẠI ĐĂNG NHẬP</label>
+                    <input type="text" id="loginCredential" required placeholder="vidu@gmail.com hoặc 0912..." class="w-full px-4 py-3 bg-pink-50/50 border border-pink-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-pink-400 text-sm">
+                </div>
+                <button type="submit" class="w-full py-3.5 bg-gradient-to-r from-pink-400 to-rose-400 text-white font-bold rounded-2xl shadow-md shadow-pink-200 hover:opacity-95 transition active:scale-98 text-sm">
+                    Vào Quản Lý An Nhiên <i class="fa-solid fa-arrow-right ml-1"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ỨNG DỤNG CHÍNH -->
+    <div id="mainApp" class="max-w-md mx-auto min-h-screen bg-white shadow-lg flex flex-col justify-between hidden">
+        
+        <!-- Header Ngọt Ngào -->
+        <header class="bg-gradient-to-r from-pink-200 via-pink-100 to-rose-100 p-4 sticky top-0 z-10 shadow-sm border-b border-pink-200/50">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                    <div class="w-9 h-9 rounded-full bg-pink-400 text-white flex items-center justify-center shadow-sm">
+                        <i class="fa-solid fa-eye text-sm"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-sm font-bold text-gray-800 leading-tight" id="salonTitle">AN NHIEN BEAUTY</h1>
+                        <p class="text-[11px] text-pink-600 font-medium" id="managerInfo">Quản lý: SĐT/Gmail</p>
+                    </div>
+                </div>
+                <button onclick="openModal('customerModal')" class="bg-pink-500 hover:bg-pink-600 text-white px-3.5 py-2 rounded-2xl font-bold text-xs shadow-md shadow-pink-200 transition active:scale-95 flex items-center space-x-1.5">
+                    <i class="fa-solid fa-user-plus"></i>
+                    <span>Khách Mới</span>
+                </button>
+            </div>
+            
+            <!-- Ô Tìm Kiếm Nhanh -->
+            <div class="mt-3 relative">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-pink-400">
+                    <i class="fa-solid fa-magnifying-glass text-sm"></i>
+                </span>
+                <input type="text" id="searchInput" oninput="filterCustomers()" placeholder="Tìm nhanh tên hoặc số điện thoại khách..." class="w-full pl-10 pr-4 py-2.5 bg-white/80 backdrop-blur border border-pink-200 placeholder-pink-300 text-gray-800 text-xs rounded-2xl focus:outline-none focus:ring-2 focus:ring-pink-400 shadow-inner">
+            </div>
+        </header>
+
+        <!-- Danh Sách Khách Hàng -->
+        <main class="p-4 flex-grow overflow-y-auto pb-24">
+            <div class="flex justify-between items-center mb-3">
+                <span class="text-xs font-bold uppercase tracking-wider text-pink-400">Danh Sách Thẻ Tích Điểm (<span id="totalCount">0</span>)</span>
+                <span class="text-[11px] text-pink-500 font-bold bg-pink-50 px-2.5 py-1 rounded-full border border-pink-100">Ô 5: Giảm 5% | Ô 10: Giảm 10%</span>
+            </div>
+
+            <div id="customerList" class="space-y-4">
+                <!-- Danh sách thẻ tích điểm render tại đây -->
+            </div>
+
+            <!-- Trạng Thái Trống -->
+            <div id="emptyState" class="hidden flex flex-col items-center justify-center py-16 text-center text-pink-300">
+                <div class="w-16 h-16 bg-pink-50 rounded-full flex items-center justify-center text-2xl mb-3 text-pink-400">
+                    <i class="fa-solid fa-heart-circle-plus"></i>
+                </div>
+                <p class="text-sm font-medium text-gray-600">Chưa có khách hàng nào</p>
+                <p class="text-xs mt-1 text-pink-400">Bấm "Khách Mới" để tạo thẻ tích điểm 10 ô ngay!</p>
+            </div>
+        </main>
+
+        <!-- Modal Thêm Khách Hàng Mới -->
+        <div id="customerModal" class="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+            <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl border-t sm:border border-pink-100">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-base font-bold text-gray-800 flex items-center">
+                        <i class="fa-solid fa-address-card text-pink-400 mr-2"></i>Tạo Thẻ Tích Điểm Mới
+                    </h3>
+                    <button onclick="closeModal('customerModal')" class="text-gray-400 hover:text-gray-600 w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <form id="customerForm" onsubmit="addCustomer(event)" class="space-y-3.5">
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-500 mb-1">TÊN KHÁCH HÀNG *</label>
+                        <input type="text" id="custName" required placeholder="Ví dụ: Chị Lan Anh" class="w-full px-4 py-2.5 bg-pink-50/40 border border-pink-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-400 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-500 mb-1">SỐ ĐIỆN THOẠI KHÁCH HÀNG *</label>
+                        <input type="tel" id="custPhone" required placeholder="0912345678" class="w-full px-4 py-2.5 bg-pink-50/40 border border-pink-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-400 text-sm">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-500 mb-1">SỐ TIỀN DỊCH VỤ (VNĐ)</label>
+                            <input type="number" id="custAmount" placeholder="350000" class="w-full px-4 py-2.5 bg-pink-50/40 border border-pink-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-400 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-500 mb-1">KIỂU MI / GHI CHÚ</label>
+                            <input type="text" id="custNote" placeholder="Mi Katun cong C" class="w-full px-4 py-2.5 bg-pink-50/40 border border-pink-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-400 text-sm">
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full py-3.5 bg-gradient-to-r from-pink-400 to-rose-400 text-white font-bold rounded-xl shadow-lg shadow-pink-200 transition active:scale-98 text-sm mt-2">
+                        Tạo Thẻ (Đã tích 1 ô đầu tiên)
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modal Check-in / Cộng Ô Tích Điểm -->
+        <div id="checkinModal" class="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+            <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl border-t sm:border border-pink-100">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-base font-bold text-gray-800 flex items-center">
+                        <i class="fa-solid fa-circle-check text-pink-500 mr-2"></i>Cộng Lượt Ghé (Check-in)
+                    </h3>
+                    <button onclick="closeModal('checkinModal')" class="text-gray-400 hover:text-gray-600 w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <p id="checkinCustInfo" class="text-xs text-pink-600 font-semibold mb-4 bg-pink-50 p-2.5 rounded-xl border border-pink-100"></p>
+                
+                <form id="checkinForm" onsubmit="submitCheckin(event)" class="space-y-3.5">
+                    <input type="hidden" id="checkinCustId">
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-500 mb-1">SỐ TIỀN LẦN NÀY (VNĐ) *</label>
+                        <input type="number" id="checkinAmount" required placeholder="Ví dụ: 400000" class="w-full px-4 py-2.5 bg-pink-50/40 border border-pink-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-400 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-500 mb-1">GHI CHÚ / KIỂU MI LẦN NÀY</label>
+                        <input type="text" id="checkinNote" placeholder="Dặm mi / Mi thiết kế..." class="w-full px-4 py-2.5 bg-pink-50/40 border border-pink-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-400 text-sm">
+                    </div>
+                    <button type="submit" class="w-full py-3.5 bg-gradient-to-r from-pink-400 to-rose-400 text-white font-bold rounded-xl shadow-lg shadow-pink-200 transition active:scale-98 text-sm mt-2">
+                        Xác Nhận Cộng 1 Ô Tích Điểm
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modal Lịch Sử Khách Hàng -->
+        <div id="detailModal" class="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+            <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl max-h-[85vh] flex flex-col border-t sm:border border-pink-100">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 id="detTitle" class="text-base font-bold text-gray-800">Chi Tiết Thẻ Khách</h3>
+                    <button onclick="closeModal('detailModal')" class="text-gray-400 hover:text-gray-600 w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div id="detSummary" class="bg-pink-50/60 p-3 rounded-2xl mb-3 text-xs space-y-1.5 border border-pink-100">
+                    <!-- Tổng hợp thông tin -->
+                </div>
+                <div class="flex justify-between items-center mb-2">
+                    <h4 class="text-[11px] font-bold uppercase tracking-wider text-pink-400">Lịch Sử Làm Mi</h4>
+                    <button onclick="resetCard()" class="text-[11px] text-rose-500 font-bold hover:underline">Đổi/Làm Mới Thẻ (Về ô 0)</button>
+                </div>
+                <div id="detHistory" class="space-y-2 overflow-y-auto flex-grow pr-1">
+                    <!-- Danh sách lịch sử -->
+                </div>
+                <div class="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center">
+                    <button onclick="deleteCurrentCustomer()" class="text-gray-400 hover:text-rose-500 text-xs font-semibold flex items-center">
+                        <i class="fa-solid fa-trash-can mr-1"></i> Xóa Khách
+                    </button>
+                    <button onclick="closeModal('detailModal')" class="px-4 py-2 bg-pink-100 text-pink-700 text-xs font-bold rounded-xl">Đóng</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Thông Báo Nhỏ Toast -->
+        <div id="toast" class="fixed bottom-16 left-1/2 transform -translate-x-1/2 bg-gray-900/90 backdrop-blur text-white px-4 py-2 rounded-full text-xs font-medium shadow-lg transition-all duration-300 opacity-0 pointer-events-none z-50">
+            Thành công
+        </div>
+
+    </div>
+
+    <script>
+        let currentUser = JSON.parse(localStorage.getItem('annhien_current_user')) || null;
+        
+        function handleLogin(e) {
+            e.preventDefault();
+            const user = document.getElementById('loginUser').value.trim();
+            const credential = document.getElementById('loginCredential').value.trim();
+            
+            currentUser = { name: user, credential: credential };
+            localStorage.setItem('annhien_current_user', JSON.stringify(currentUser));
+            
+            checkLoginState();
+            showToast(`Chào mừng bạn quay lại, ${user}!`);
+        }
+
+        function checkLoginState() {
+            if (currentUser) {
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+                document.getElementById('salonTitle').innerText = `AN NHIEN BEAUTY`;
+                document.getElementById('managerInfo').innerText = `Quản lý: ${currentUser.name} (${currentUser.credential})`;
+                renderCustomers();
+            } else {
+                document.getElementById('loginScreen').classList.remove('hidden');
+                document.getElementById('mainApp').classList.add('hidden');
+            }
+        }
+
+        let customers = JSON.parse(localStorage.getItem('annhien_customers_v1')) || [
+            { 
+                id: 1, 
+                name: "Chị Ngọc Mai", 
+                phone: "0905123456", 
+                visits: 3, 
+                totalSpent: 1200000, 
+                lastNote: "Mi Katun dày", 
+                history: [
+                    { date: "10/01/2026", amount: 400000, note: "Nối mới Mi Katun" },
+                    { date: "25/01/2026", amount: 350000, note: "Dặm mi" },
+                    { date: "15/02/2026", amount: 450000, note: "Làm mới kiểu Thái" }
+                ]
+            },
+            { 
+                id: 2, 
+                name: "Bạn Thu Trang", 
+                phone: "0988776655", 
+                visits: 6, 
+                totalSpent: 2100000, 
+                lastNote: "Classic tự nhiên", 
+                history: [
+                    { date: "01/01/2026", amount: 350000, note: "Nối lần 1" },
+                    { date: "10/01/2026", amount: 350000, note: "Nối lần 2" },
+                    { date: "20/01/2026", amount: 350000, note: "Nối lần 3" },
+                    { date: "01/02/2026", amount: 350000, note: "Nối lần 4" },
+                    { date: "10/02/2026", amount: 350000, note: "Nối lần 5 (Ưu đãi 5%)" },
+                    { date: "20/02/2026", amount: 350000, note: "Nối lần 6" }
+                ]
+            }
+        ];
+
+        let activeCustomerId = null;
+
+        function saveToStorage() {
+            localStorage.setItem('annhien_customers_v1', JSON.stringify(customers));
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.innerText = message;
+            toast.classList.remove('opacity-0', 'pointer-events-none');
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'pointer-events-none');
+            }, 2500);
+        }
+
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+        }
+
+        function renderCustomers(filterText = '') {
+            const listEl = document.getElementById('customerList');
+            const emptyEl = document.getElementById('emptyState');
+            const totalCountEl = document.getElementById('totalCount');
+
+            const filtered = customers.filter(c => 
+                c.name.toLowerCase().includes(filterText.toLowerCase()) || 
+                (c.phone && c.phone.includes(filterText))
+            );
+
+            totalCountEl.innerText = customers.length;
+
+            if (filtered.length === 0) {
+                listEl.innerHTML = '';
+                emptyEl.classList.remove('hidden');
+                return;
+            }
+
+            emptyEl.classList.add('hidden');
+            
+            listEl.innerHTML = filtered.map(c => {
+                const currentVisits = c.visits;
+                const completedCycles = Math.floor((currentVisits - 1) / 10);
+
+                let slotsHTML = '';
+                for (let i = 1; i <= 10; i++) {
+                    let isChecked = i <= (currentVisits % 10 === 0 && currentVisits > 0 ? 10 : currentVisits % 10);
+                    let isSpecial5 = (i === 5);
+                    let isSpecial10 = (i === 10);
+
+                    let bgClass = "bg-gray-50 border-pink-100 text-gray-300";
+                    let iconOrText = i;
+
+                    if (isChecked) {
+                        bgClass = "bg-pink-400 text-white border-pink-400 shadow-xs";
+                        iconOrText = '<i class="fa-solid fa-check text-[10px]"></i>';
+                    }
+
+                    let extraRing = "";
+                    if (isSpecial5) {
+                        extraRing = isChecked ? "ring-2 ring-rose-300" : "border-dashed border-rose-300 text-rose-400 font-bold bg-rose-50";
+                        if (!isChecked) iconOrText = "5%";
+                    }
+                    if (isSpecial10) {
+                        extraRing = isChecked ? "ring-2 ring-pink-500" : "border-dashed border-pink-400 text-pink-500 font-bold bg-pink-50";
+                        if (!isChecked) iconOrText = "10%";
+                    }
+
+                    slotsHTML += `
+                        <div class="w-7 h-7 rounded-xl flex items-center justify-center text-[10px] font-bold border transition ${bgClass} ${extraRing}" title="Ô số ${i}">
+                            ${iconOrText}
+                        </div>
+                    `;
+                }
+
+                let currentPerk = "Chưa có ưu đãi";
+                const remInCycle = currentVisits % 10;
+                if (remInCycle === 5) currentPerk = "🎁 Đã đạt mốc GIẢM 5% lần này!";
+                else if (remInCycle === 0 && currentVisits > 0) currentPerk = "👑 Đã đạt mốc GIẢM 10% lần này!";
+                else if (remInCycle > 5 && remInCycle < 10) currentPerk = `Còn ${10 - remInCycle} ô nữa nhận giảm 10%`;
+                else if (remInCycle < 5) currentPerk = `Còn ${5 - remInCycle} ô nữa nhận giảm 5%`;
+
+                return `
+                    <div class="bg-gradient-to-br from-white to-pink-50/40 border border-pink-200/80 rounded-3xl p-4 shadow-sm hover:shadow-md transition relative">
+                        <div class="flex justify-between items-start mb-2">
+                            <div onclick="openDetail(${c.id})" class="cursor-pointer flex-grow">
+                                <div class="flex items-center space-x-2">
+                                    <h3 class="font-bold text-gray-800 text-base">${c.name}</h3>
+                                    <span class="bg-pink-100 text-pink-700 text-[11px] font-bold px-2 py-0.5 rounded-full">
+                                        <i class="fa-solid fa-star text-[9px] mr-0.5"></i>${c.visits} lần
+                                    </span>
+                                </div>
+                                <p class="text-xs text-gray-400 mt-0.5"><i class="fa-solid fa-phone mr-1"></i>${c.phone || 'Không có SĐT'}</p>
+                            </div>
+                            <div>
+                                <button onclick="openCheckin(${c.id})" class="bg-gradient-to-r from-pink-400 to-rose-400 hover:opacity-95 text-white text-xs px-3.5 py-2 rounded-2xl font-bold shadow-sm transition active:scale-95 flex items-center space-x-1">
+                                    <i class="fa-solid fa-plus"></i>
+                                    <span>Check-in</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div onclick="openDetail(${c.id})" class="cursor-pointer my-3 bg-white p-3 rounded-2xl border border-pink-100 shadow-inner">
+                            <div class="flex justify-between items-center mb-1.5">
+                                <span class="text-[10px] font-bold text-pink-500 uppercase tracking-wider">Thẻ 10 Ô Tích Điểm (Vòng ${completedCycles + 1})</span>
+                                <span class="text-[10px] font-bold text-rose-500">${currentPerk}</span>
+                            </div>
+                            <div class="grid grid-cols-10 gap-1.5">
+                                ${slotsHTML}
+                            </div>
+                        </div>
+
+                        <div onclick="openDetail(${c.id})" class="cursor-pointer pt-2 border-t border-pink-100/60 flex justify-between items-center text-xs">
+                            <div>
+                                <span class="text-gray-400 text-[11px]">Tổng chi:</span> 
+                                <span class="font-bold text-pink-600">${formatCurrency(c.totalSpent)}</span>
+                            </div>
+                            <div class="text-gray-500 truncate max-w-[160px] text-right text-[11px]">
+                                <span class="text-gray-400">Kiểu mi:</span> ${c.lastNote || 'Chưa ghi chú'}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterCustomers() {
+            const query = document.getElementById('searchInput').value;
+            renderCustomers(query);
+        }
+
+        function addCustomer(e) {
+            e.preventDefault();
+            const name = document.getElementById('custName').value.trim();
+            const phone = document.getElementById('custPhone').value.trim();
+            const amount = parseFloat(document.getElementById('custAmount').value) || 0;
+            const note = document.getElementById('custNote').value.trim() || 'Nối mới lần đầu';
+
+            const today = new Date().toLocaleDateString('vi-VN');
+
+            const newCust = {
+                id: Date.now(),
+                name: name,
+                phone: phone,
+                visits: 1,
+                totalSpent: amount,
+                lastNote: note,
+                history: [
+                    { date: today, amount: amount, note: note + " (Tạo thẻ mới)" }
+                ]
+            };
+
+            customers.unshift(newCust);
+            saveToStorage();
+            renderCustomers();
+            closeModal('customerModal');
+            document.getElementById('customerForm').reset();
+            showToast(`Đã tạo thẻ tích điểm cho ${name}!`);
+        }
+
+        function openCheckin(id) {
+            const c = customers.find(x => x.id === id);
+            if (!c) return;
+            activeCustomerId = id;
+            document.getElementById('checkinCustInfo').innerHTML = `Khách hàng: <b>${c.name}</b> (Đang ở lần ghé thứ <b>${c.visits}</b>)`;
+            document.getElementById('checkinAmount').value = '';
+            document.getElementById('checkinNote').value = '';
+            openModal('checkinModal');
+        }
+
+        function submitCheckin(e) {
+            e.preventDefault();
+            const amount = parseFloat(document.getElementById('checkinAmount').value) || 0;
+            let note = document.getElementById('checkinNote').value.trim() || 'Dặm / làm mới mi';
+            const today = new Date().toLocaleDateString('vi-VN');
+
+            const c = customers.find(x => x.id === activeCustomerId);
+            if (c) {
+                c.visits += 1;
+                c.totalSpent += amount;
+
+                let perkText = "";
+                if (c.visits % 10 === 5) {
+                    perkText = " [ĐÃ ÁP DỤNG GIẢM 5%] ";
+                } else if (c.visits % 10 === 0) {
+                    perkText = " [ĐÃ ÁP DỤNG GIẢM 10%] ";
+                }
+
+                c.lastNote = note + perkText;
+                c.history.unshift({ date: today, amount: amount, note: note + perkText });
+                
+                saveToStorage();
+                renderCustomers();
+                closeModal('checkinModal');
+                
+                if (c.visits % 10 === 5) {
+                    showToast(`🎉 Tuyệt vời! ${c.name} đã đạt mốc GIẢM 5%!`);
+                } else if (c.visits % 10 === 0) {
+                    showToast(`👑 Chúc mừng! ${c.name} đã đạt mốc GIẢM 10%!`);
+                } else {
+                    showToast(`Đã cộng 1 ô tích điểm cho ${c.name}!`);
+                }
+            }
+        }
+
+        function openDetail(id) {
+            const c = customers.find(x => x.id === id);
+            if (!c) return;
+            activeCustomerId = id;
+
+            document.getElementById('detTitle').innerText = `Thẻ Tích Điểm: ${c.name}`;
+            document.getElementById('detSummary').innerHTML = `
+                <div class="flex justify-between"><span>Số điện thoại:</span> <strong>${c.phone || 'Không có'}</strong></div>
+                <div class="flex justify-between"><span>Tổng số lần ghé:</span> <strong class="text-pink-600">${c.visits} lần (Ô số ${(c.visits - 1) % 10 + 1})</strong></div>
+                <div class="flex justify-between"><span>Tổng tiền dịch vụ:</span> <strong class="text-pink-600">${formatCurrency(c.totalSpent)}</strong></div>
+            `;
+
+            const historyEl = document.getElementById('detHistory');
+            if (c.history && c.history.length > 0) {
+                historyEl.innerHTML = c.history.map((h, idx) => `
+                    <div class="bg-pink-50/40 p-2.5 rounded-xl text-xs flex justify-between items-center border border-pink-100">
+                        <div>
+                            <span class="font-bold text-gray-700">${h.date}</span> - <span class="text-pink-600 font-bold">${formatCurrency(h.amount)}</span>
+                            <p class="text-gray-400 text-[11px] mt-0.5">${h.note}</p>
+                        </div>
+                        <span class="text-[10px] bg-pink-100 text-pink-600 px-2 py-0.5 rounded-full font-bold">Lần ${c.history.length - idx}</span>
+                    </div>
+                `).join('');
+            } else {
+                historyEl.innerHTML = '<p class="text-xs text-gray-400 text-center py-4">Chưa có lịch sử dịch vụ.</p>';
+            }
+
+            openModal('detailModal');
+        }
+
+        function resetCard() {
+            if (confirm("Bạn có muốn làm mới thẻ tích điểm này về 0 để bắt đầu chu kỳ 10 ô mới không?")) {
+                const c = customers.find(x => x.id === activeCustomerId);
+                if (c) {
+                    c.visits = 0;
+                    c.history.unshift({ date: new Date().toLocaleDateString('vi-VN'), amount: 0, note: "Làm mới thẻ tích điểm chu kỳ mới" });
+                    saveToStorage();
+                    renderCustomers();
+                    openDetail(activeCustomerId);
+                    showToast("Đã làm mới thẻ tích điểm!");
+                }
+            }
+        }
+
+        function deleteCurrentCustomer() {
+            if (confirm("Bạn có chắc chắn muốn xóa thẻ của khách hàng này không?")) {
+                customers = customers.filter(x => x.id !== activeCustomerId);
+                saveToStorage();
+                renderCustomers();
+                closeModal('detailModal');
+                showToast("Đã xóa thẻ khách hàng!");
+            }
+        }
+
+        checkLoginState();
+    </script>
+</body>
+</html>
+
+
